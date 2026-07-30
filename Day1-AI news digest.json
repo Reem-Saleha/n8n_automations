@@ -1,0 +1,337 @@
+{
+  "name": "Day1-AI news digest",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://hn.algolia.com/api/v1/search?query=AI&tags=story&hitsPerPage=30",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        64,
+        144
+      ],
+      "id": "7645a138-e10a-4617-8859-e753d8a4dd8d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "hits",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -80
+      ],
+      "id": "092d9e59-b094-496d-a302-93630d00400b",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ef7aa46a-df9d-4326-86ad-dc061c593cf0",
+              "leftValue": "={{ $json.points }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        160
+      ],
+      "id": "c23f95e2-9e7c-4547-b4c9-5319675766cc",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "points",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        544,
+        160
+      ],
+      "id": "a8032c7e-d6f1-4359-b162-ef78809c5be6",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -64
+      ],
+      "id": "ee92d230-ef53-441b-8e38-6f561a125113",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        768,
+        160
+      ],
+      "id": "b9149405-355b-47e4-aa5e-071dc1bc65e9",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "fromEmail": "reemsaleha06@gmail.com",
+        "toEmail": "reemsaleha06@gmail.com",
+        "subject": "=Top AI stories — {{ $now.toFormat('dd LLL yyyy') }}",
+        "emailFormat": "text",
+        "text": "={{ $json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        -32
+      ],
+      "id": "c4e47da3-cf7b-491e-8a13-c0a96c64d5b1",
+      "name": "Send an Email",
+      "webhookId": "334ed898-d2cb-4166-a1b4-12959c008e0b",
+      "credentials": {
+        "smtp": {
+          "id": "TTiRWCbucuGhU4kc",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d13fab85-8bdc-4442-8469-6fee35796012",
+              "name": "=message",
+              "value": "={{ $json.data.map((s, i) => `${i+1}. ${s.title} (${s.points} pts)\\n${s.url}`).join('\\n\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "006b0766-7446-450a-b815-832b23061e77",
+      "name": "Build Message"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dc0b0d88-5362-4e83-891b-1e5ec7e8e978",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "11117d4e-4863-41a7-b527-9c1b6b588057",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "6e52dd28-a888-4df1-9bd6-6fe5d078bbdb",
+              "name": "points",
+              "value": "={{ $json.points }}",
+              "type": "string"
+            },
+            {
+              "id": "20daea1e-eff1-4686-bc95-8d304d590a95",
+              "name": "author",
+              "value": "={{ $json.author }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        -80
+      ],
+      "id": "777535c9-2397-4068-9588-3b58235a7568",
+      "name": "Clean Story Data"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        -96
+      ],
+      "id": "fb5855f5-d348-4b42-b3d3-a69413bc1cff",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Clean Story Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Build Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Message": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Story Data": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5f6a28e3-bd89-4796-8f13-549d5d436219",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fd43b211d83696e30843d8acf8fd490b20710b6bbcad88a2f6b9b28208c1aec"
+  },
+  "nodeGroups": [],
+  "id": "VlXPNw9zZewxTtFS",
+  "tags": []
+}
