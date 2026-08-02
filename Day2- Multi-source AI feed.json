@@ -1,0 +1,832 @@
+{
+  "name": "Day2- Multi-source AI feed",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://hn.algolia.com/api/v1/search?query=AI&tags=story&hitsPerPage=50",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "page",
+                    "value": "={{ $pageCount }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $pageCount >= 3 }}"
+            }
+          }
+        }
+      },
+      "id": "9f52576c-87e3-48d5-a63c-3827fdd92a1b",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        48,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "hits",
+        "options": {}
+      },
+      "id": "1dda98a6-7aac-4b26-9087-4a71e094d0ad",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c9727163-2717-4319-91ef-1848c29798c0",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d6c87a95-bc88-46bd-aac5-ead5867c7a98",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "fae6b65a-bd82-4ca3-808f-26a7d7644bc3",
+              "name": "score",
+              "value": "={{ $json.points }}",
+              "type": "number"
+            },
+            {
+              "id": "94f581f5-5fa2-434e-988e-6869b46bac31",
+              "name": "source",
+              "value": "HN",
+              "type": "string"
+            },
+            {
+              "id": "7c1e986f-6fc7-4ea4-9f07-1baf3f73414a",
+              "name": "id",
+              "value": "={{ $json.objectID }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "51fd25f4-9f0c-4392-b285-7759b63b12f7",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=30",
+        "options": {}
+      },
+      "id": "0eb8005f-1dab-4dce-8fae-e4df18655186",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        48,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "276b6a74-6248-4a3f-a026-d2b90c36d353",
+      "name": "XML",
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        240,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "feed.entry",
+        "options": {}
+      },
+      "id": "120b9a91-9cbf-4bc8-8cc7-30efb1bf58e1",
+      "name": "Split Out1",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        432,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a64007ec-cbe9-412c-b88b-dede3735d915",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "82c1ead8-9f12-41ed-a201-cfe73b4e92d3",
+              "name": "url",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "b9bee7b3-ad33-4e11-862f-a2a1748b4c57",
+              "name": "score",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "781b4ce0-856c-42a8-b3c0-457c97ac499c",
+              "name": "source",
+              "value": "arXiv",
+              "type": "string"
+            },
+            {
+              "id": "357e2780-2d14-4d24-8f13-3b2ae13d6048",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "42d594ea-ed16-4857-a078-fd6fd45930f6",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        256
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "50f4ac01-8ced-4c79-9658-b5ca36c731de",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "id",
+        "options": {}
+      },
+      "id": "709bb798-48ac-44ff-888d-96fd9ae5398b",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        992,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.source }}",
+                    "rightValue": "arXiv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1e7ab407-5c4e-4a89-b966-c7928228ab36"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Research"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "15eb0034-035a-473f-8b61-3f75d5ffd77e",
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 1050,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Hot"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "bee500fe-0d00-4c88-a368-160a3a068f7b",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        16
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ea23d6b2-4365-48d6-8ff5-b10f70c3fc08",
+      "name": "Research Papers",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2a485323-6cef-43bf-8276-8f5f7d372787",
+      "name": "Hot Stories",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        96
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6d7bdc88-12c9-4dcd-9130-0385fc23f3bc",
+      "name": "Other",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        -112
+      ],
+      "id": "2faca23d-581e-4bbe-9bce-5312abf9d2e5",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        -112
+      ],
+      "id": "65b70f4a-8a03-4c2c-8f79-859836890579",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a141c42b-ed66-4dff-b07a-a32dfcda1913",
+              "name": "message",
+              "value": "=📄 New AI papers  {{ $json.data.map((s, i) => `${i+1}. ${s.title}\\n${s.url}`).join('\\n\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        -112
+      ],
+      "id": "b1e9ceda-c260-4b72-9a51-86649ec6743a",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "score",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        112
+      ],
+      "id": "083d797c-7b4e-49b1-aede-e9f0ccaa0427",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        128
+      ],
+      "id": "a4ac4253-f544-42e1-8e4d-f1b266000e54",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        144
+      ],
+      "id": "0b824d07-d5d2-47aa-a889-bf8902b220e2",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4482ce36-bfd0-41bf-b631-587a6cd22b7d",
+              "name": "message",
+              "value": "={{ $json.data.map((s, i) => `${i+1}. ${s.title} (${s.score} pts)\\n${s.url}`).join('\\n\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2000,
+        144
+      ],
+      "id": "1c9fd936-8dee-4ea7-863c-37b69a438078",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "content": "Fallback = HN stories under 1000 pts. Intentionally unused......  too noisy for a daily digest. Could feed a weekly roundup later",
+        "height": 144,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        368
+      ],
+      "id": "f86a8868-e91a-4304-afb3-d929ef5c496c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2176,
+        0
+      ],
+      "id": "1b036b76-feef-404a-8080-c0515721b2ca",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        96
+      ],
+      "id": "5b83562d-3ec8-4978-8957-62f416a0851d",
+      "name": "Aggregate2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "73184e06-0a35-4cff-9c09-66b57556c9ad",
+              "name": "body",
+              "value": "={{ $json.data.map(d => d.message).join('\\n\\n———————————\\n\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2640,
+        -16
+      ],
+      "id": "b32656c9-aa97-4a03-9680-11f9d3d59e20",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "fromEmail": "reemsaleha06@gmail.com",
+        "toEmail": "reemsaleha06@gmail.com",
+        "subject": "AI Digest ",
+        "emailFormat": "text",
+        "text": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2848,
+        -16
+      ],
+      "id": "94971eae-b13d-4a97-b9cf-02f970c2ff4b",
+      "name": "Send an Email",
+      "webhookId": "ec4758a1-6037-4244-a78d-b688a1f1acca",
+      "credentials": {
+        "smtp": {
+          "id": "TTiRWCbucuGhU4kc",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -256,
+        64
+      ],
+      "id": "427ac771-ca32-4ad9-87b1-12c3c49ebcb9",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Research Papers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hot Stories",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Other",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Papers": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Stories": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Other": {
+      "main": [
+        []
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e6b34657-9375-46f7-8391-9e30076f5649",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fd43b211d83696e30843d8acf8fd490b20710b6bbcad88a2f6b9b28208c1aec"
+  },
+  "nodeGroups": [],
+  "id": "MMOLk9qoxZhQIBpI",
+  "tags": []
+}
