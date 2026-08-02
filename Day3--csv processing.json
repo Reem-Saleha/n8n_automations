@@ -1,0 +1,208 @@
+{
+  "name": "Day3--csv processing",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "cc88b905-3754-4dcc-8a65-2aac39e8e92e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f9ae1c33-e9f2-4732-ac50-ab07beedb8ad",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "survival-by-class.csv"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "945e7d65-41b0-4620-a7d8-f15f0e823897",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "fromEmail": "reemsaleha06@gmail.com",
+        "toEmail": "reemsaleha06@gmail.com",
+        "subject": "Titanic survival analysis",
+        "emailFormat": "text",
+        "text": "Survival rates by passenger class attached. Generated from 891 records",
+        "options": {
+          "fileAttachments": "data"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "f253c0d6-bfd0-4447-8fe4-c7f89385059f",
+      "name": "Send an Email",
+      "webhookId": "b75682dd-9926-4dfa-8c16-dca350598165",
+      "credentials": {
+        "smtp": {
+          "id": "TTiRWCbucuGhU4kc",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5cd7c03e-840e-46c0-9cae-3e42239a598b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p = $json;\n\n// Age is a string and often empty — parse defensively\nconst ageNum = p.Age === '' || p.Age === null ? null : Number(p.Age);\n\nlet ageBracket;\nif (ageNum === null)      ageBracket = 'Unknown';\nelse if (ageNum < 13)     ageBracket = 'Child';\nelse if (ageNum < 20)     ageBracket = 'Teen';\nelse if (ageNum < 60)     ageBracket = 'Adult';\nelse                      ageBracket = 'Senior';\n\n// \"Braund, Mr. Owen Harris\" → title = \"Mr\"\nconst titleMatch = p.Name.match(/,\\s*([^.]+)\\./);\nconst title = titleMatch ? titleMatch[1].trim() : 'Unknown';\n\nconst classLabel = { '1': 'First', '2': 'Second', '3': 'Third' }[p.Pclass] || 'Unknown';\n\nreturn {\n  json: {\n    passengerId: Number(p.PassengerId),\n    name: p.Name,\n    title,\n    sex: p.Sex,\n    age: ageNum,\n    ageBracket,\n    pclass: Number(p.Pclass),\n    classLabel,\n    fare: Number(p.Fare),\n    survived: p.Survived === '1' || p.Survived === 1,\n    familySize: Number(p.SibSp) + Number(p.Parch) + 1\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "a1050901-ac46-432e-bd6a-701673ae2908",
+      "name": "enrich rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\n\nconst groups = {};\nfor (const r of rows) {\n  const key = r.classLabel;\n  if (!groups[key]) {\n    groups[key] = { classLabel: key, pclass: r.pclass, total: 0, survivors: 0, fares: [], ages: [] };\n  }\n  groups[key].total++;\n  if (r.survived) groups[key].survivors++;\n  if (!isNaN(r.fare)) groups[key].fares.push(r.fare);\n  if (r.age !== null) groups[key].ages.push(r.age);\n}\n\nconst avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;\n\nreturn Object.values(groups)\n  .sort((a, b) => a.pclass - b.pclass)\n  .map(g => ({\n    json: {\n      class: g.classLabel,\n      passengers: g.total,\n      survivors: g.survivors,\n      survivalRate: Number(((g.survivors / g.total) * 100).toFixed(1)),\n      avgFare: Number(avg(g.fares).toFixed(2)),\n      avgAge: g.ages.length ? Number(avg(g.ages).toFixed(1)) : null,\n      ageDataMissing: g.total - g.ages.length\n    }\n  }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "a02e3d94-b418-4961-8633-590d5a1a153c",
+      "name": "survival by class"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "enrich rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enrich rows": {
+      "main": [
+        [
+          {
+            "node": "survival by class",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "survival by class": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "17c383e2-9da5-4138-8b69-b56f5c597e05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fd43b211d83696e30843d8acf8fd490b20710b6bbcad88a2f6b9b28208c1aec"
+  },
+  "nodeGroups": [],
+  "id": "INroShFhk5DXBYa1",
+  "tags": []
+}
