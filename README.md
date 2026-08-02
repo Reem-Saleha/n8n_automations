@@ -1,56 +1,51 @@
-# Hacker News AI Daily Digest 📰🤖
+# n8n Automations
 
-Fetches AI-related stories from Hacker News every morning, filters out low-signal posts, formats the top 5 into a readable digest, and emails it at 9:00 AM. Runs unattended on a schedule.
+Learning n8n properly — workflow JSON, architecture notes, and what broke along the way.
 
-*Built as a first end-to-end n8n workflow to learn the platform's data model properly rather than following a tutorial.*
-
----
-
-## 🚀 Overview
-
-| Feature | Details |
-| :--- | :--- |
-| **Trigger** | Schedule — daily at 09:00 |
-| **Source** | HN Algolia Search API (public, no auth) |
-| **Output** | Formatted email digest of the top 5 stories |
-| **Runtime** | ~3–6 seconds per execution |
-| **Stack** | n8n Cloud · HN Algolia Search API · SMTP |
+Each project folder contains an importable `workflow.json`, a canvas screenshot, and a README covering how it's built, what I learned, and what I'd do differently. The last two sections are the point; the workflows themselves are small.
 
 ---
 
-## 🧠 What I learned
-An array inside an item is not multiple items: The API returns a single item containing a hits array of 30 objects. Downstream nodes see one item until Split Out explicitly expands it. This is the single biggest source of confusion in n8n and it's visible in the item counts on every connection.
+## Projects
 
-Nodes run once per item automatically: No loop node is needed to iterate — loops exist for batching and rate-limiting, not iteration.
+| # | Project | What it does | Key concepts |
+|---|---|---|---|
+| 01 | [AI News Digest](./01-ai-news-digest) | Emails a daily digest of top AI stories from Hacker News | The item model, Split Out / Aggregate, scheduling, SMTP |
+| 02 | [Multi-Source AI Feed](./02-multi-source-feed) | Merges paginated HN results with arXiv papers, dedupes, routes by category | Pagination, Switch routing, Merge modes, schema normalisation |
+| 03 | [CSV Processing Pipeline](./03-csv-pipeline) | Downloads a CSV, enriches rows, computes grouped stats, emails the result as a file | Code node (both modes), binary data, file conversion |
 
-Line breaks in JSON: \n in a JSON view is a working newline, not a bug. JSON escapes line breaks for display. The expression editor's Result preview renders the real thing, and that preview (with its per-item stepper) is the most useful debugging surface in the tool.
+---
 
-Test your filters: A condition you've never seen reject anything is untested. The filter initially passed all 30 items because HN's relevance search already returns high-scoring stories. Raising the threshold until items were discarded proved it actually worked.
+## Running any of these
 
-Data hygiene: Reshape data before it leaves the pipeline. The raw API response carries ~15 fields per story including _highlightResult markup and Algolia metadata. Reducing to 4 chosen fields matters as soon as the next step is a database write or an LLM prompt, where junk fields become cost and noise.
+1. Open n8n → **Workflows → Import from File** and select the project's `workflow.json`. Alternatively, copy the file contents and paste directly onto the canvas with `Ctrl+V` — a workflow is just JSON underneath.
+2. Create whatever credentials that project's README lists. Credentials are stored separately in n8n and are **not** included in these exports, so no secrets travel with the files.
+3. Run manually first, then publish if it has a schedule trigger.
 
+Everything here uses free, public, unauthenticated APIs. The only credential any project needs is SMTP for email delivery.
 
-## 🏗️ Architecture
+---
 
-The item counts are the interesting part. The workflow deliberately goes one-to-many (`Split Out`) and then many-to-one (`Aggregate`), because that round trip is the core of how n8n moves data.
+## Things that took me longest to understand
 
-```text
-Schedule Trigger
-      ↓
-HTTP Request        GET [hn.algolia.com/api/v1/search](https://hn.algolia.com/api/v1/search)   → 1 item (30 stories nested)
-      ↓
-Split Out           field: hits                        → 30 items
-      ↓
-Filter              points > 2000                      → 11 kept / 19 discarded
-      ↓
-Clean Story Data    keep title, url, points, author    → 11 items, 4 fields each
-      ↓
-Sort                points, descending                 → 11 items
-      ↓
-Limit               max 5, keep first                  → 5 items
-      ↓
-Aggregate           all item data → field: data        → 1 item
-      ↓
-Build Message       compose digest string              → 1 item
-      ↓
-Send an Email       SMTP                               → delivered
+Collected across projects, since they came up more than once.
+
+**An array inside an item is not multiple items.** An API returning 30 records in a `hits` array is *one* item until `Split Out` expands it. The item counts printed on every canvas connection are the primary diagnostic — a surprising number means open the JSON, not move on.
+
+**Expressions are stored with a leading `=`.** `{{ $json.url }}` is literal text; `={{ $json.url }}` is evaluated. The Fixed/Expression toggle just adds or removes that character. When a field silently holds literal `{{ }}` text, the resulting failure shows up downstream as a *type* error, which sends you debugging the wrong thing entirely.
+
+**Fix data types where data is created, not where it's consumed.** Patching a mismatch at the comparison means the next node that touches the field breaks too. "Convert types where required" makes broken comparisons appear to work and hides real defects — leave it off.
+
+**A condition you've never seen reject anything is untested.** Raise the threshold until items actually get discarded, then set it back.
+
+**Green checkmarks mean the node didn't throw, not that the output is correct.** A workflow can run entirely clean and produce garbage — literal `{{ }}` strings in every field, a Split Out on the wrong path, a routing rule that can never match. Reading the data at each step is not optional.
+
+---
+
+## Stack
+
+n8n Cloud · JavaScript expressions · REST + XML APIs · SMTP
+
+---
+
+**Reem** — BS Artificial Intelligence, NUST SEECS
